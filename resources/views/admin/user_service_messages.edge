@@ -1,0 +1,165 @@
+@layout('layouts.admin')
+@section('content')
+    <!-- Main content -->
+    <main class="content">
+        <div class="container p-0">
+            <div class="card">
+                <div class="row g-0">
+                    <div class="col-12 col-lg-5 col-xl-3 border-right">
+                        @each(peer in peers)
+                        <a href="#" class="list-group-item list-group-item-action border-0" data-peer-id="{{ peer.id }}" data-peer-title="{{ peer.title }}">
+                            <div class="d-flex align-items-start">
+                                <img src="/img/avatar5.png" class="rounded-circle mr-1" alt="Vanessa Tucker" width="40" height="40">
+                                <div class="flex-grow-1 ml-3">
+                                    {{ peer.title }}
+                                </div>
+                            </div>
+                        </a>
+                        @endeach
+                        <hr class="d-block d-lg-none mt-1 mb-0">
+                    </div>
+                    <div class="col-12 col-lg-7 col-xl-9">
+                        <div class="py-2 px-4 border-bottom d-none d-lg-block">
+                            <div class="d-flex align-items-center py-1">
+                                <div class="position-relative">
+                                    <img src="/img/avatar5.png" class="rounded-circle mr-1" alt="Sharon Lessman" width="40" height="40">
+                                </div>
+                                <div class="flex-grow-1 pl-3">
+                                    <strong id="peerTitle"></strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="position-relative">
+                            <div class="chat-messages p-4">
+
+                                <a href="#" id="loadMore" onclick="loadMore()">加载更多</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <style>
+        body{margin-top:20px;}
+
+        .chat-online {
+            color: #34ce57
+        }
+
+        .chat-offline {
+            color: #e4606d
+        }
+
+        .chat-messages {
+            display: flex;
+            flex-direction: column;
+            max-height: 800px;
+            overflow-y: scroll
+        }
+
+        .chat-message-left,
+        .chat-message-right {
+            display: flex;
+            flex-shrink: 0
+        }
+
+        .chat-message-left {
+            margin-right: auto
+        }
+
+        .chat-message-right {
+            flex-direction: row-reverse;
+            margin-left: auto
+        }
+        .py-3 {
+            padding-top: 1rem!important;
+            padding-bottom: 1rem!important;
+        }
+        .px-4 {
+            padding-right: 1.5rem!important;
+            padding-left: 1.5rem!important;
+        }
+        .flex-grow-0 {
+            flex-grow: 0!important;
+        }
+        .border-top {
+            border-top: 1px solid #dee2e6!important;
+        }
+        #loadMore {
+            width: 100%;
+            color: rgb(29, 155, 240);
+            display: block;
+            text-align: center;
+            margin: 0 auto 5px auto;
+            padding: 2px;
+            border-radius: 10px;
+            border: 1px solid transparent;
+            background-color: #fff;
+            transition: .3s;
+            font-size: 12px;
+        }
+        #loadMore:hover {
+            background-color: rgba(0,0,0,0.03);
+            text-decoration: none;
+        }
+    </style>
+@endsection
+@section("script")
+    <script src="/js/mustache-4.2.0.js"></script>
+    <script src="/js/moment.js"></script>
+    <script id="post-template" type="text/x-handlebars-template">
+        <%#messages%>
+        <div class="chat-message-<%dir%>  pb-4">
+            <div>
+                <div class="text-muted small text-nowrap mt-2"><% timeStr %></div>
+            </div>
+            <div class="flex-shrink-1 bg-light rounded py-2 px-3 ml-3">
+                <%message%>
+            </div>
+        </div>
+        <%/messages%>
+  </script>
+    <script>
+        var peerId = ''
+        var page = 1;
+        const customTags = [ '<%', '%>' ];
+        function getMessage() {
+            $.ajax({
+                url: "/admin/user/{{ request.params.userId }}/service/{{ request.params.serviceId }}/"+peerId+"/messages?page="+page,
+                type: 'GET',
+                dataType: 'json',
+                success: function(messages) {
+                    if (messages.length > 0) {
+                        $("#loadMore").after(Mustache.render($('#post-template').html(), {messages:messages.map((message) => {
+                                let time = moment.unix(message.time)
+
+                                return {...message, dir: message.type === 0 ? 'left' : 'right', timeStr: time.format(time.isSame(moment(), 'day') ? 'HH:mm' : "MM-DD HH:mm")}
+                            })}, {}, customTags));
+                    } else {
+                        $("#loadMore").html("没有更多了")
+                    }
+
+                },
+                error: function(xhr, status, error) {
+                    console.error(error);
+                }
+            });
+        }
+        $(document).ready(function() {
+            // getMessage()
+        });
+        $('.list-group-item').on('click', function () {
+            $('.chat-messages').html('<a href="#" id="loadMore" onclick="loadMore()">加载更多</a>');
+            peerId = $(this).data('peer-id')
+            page = 1
+            $("#peerTitle").html($(this).data('peer-title'))
+            getMessage();
+        });
+        function loadMore() {
+            page++;
+            getMessage()
+        }
+    </script>
+@endsection

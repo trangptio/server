@@ -1,0 +1,237 @@
+@layout('layouts.admin')
+@section('content')
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+
+                            <div class="card-tools">
+                                <div class="input-group input-group-sm" style="width: 150px;">
+                                    <input value="{{ keyword }}" type="text" name="table_search" class="form-control float-right" placeholder="搜索邮箱" id="search">
+
+                                    <div class="input-group-append">
+                                        <button type="submit" class="btn btn-default" onclick="search()">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /.card-header -->
+                        <div class="card-body table-responsive p-0">
+                            <table class="table table-hover text-nowrap">
+                                <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>邮箱</th>
+                                    <th>用户名</th>
+                                    <th>类型</th>
+                                    <th>限定字符数</th>
+                                    <th>已用字符数</th>
+                                    <th>过期时间</th>
+                                    <th>管理</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                @each(user in users.data)
+                                <tr>
+                                    <td>{{ user.id }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.username }}</td>
+                                    <td>
+                                    @if(user.type === 0)
+                                        限字符不限时
+                                    @elseif(user.type === 1)
+                                        限时不限字符
+                                    @elseif(user.type === 2)
+                                        限时限字符
+                                    @elseif(user.type === 3)
+                                        不限时不限字符
+                                    @endif
+                                    </td>
+                                    <td>{{ user.count }}</td>
+                                    <td>{{ user.used }}</td>
+                                    <td>{{ user.expire ? user.expire : '' }}</td>
+                                    <td>
+                                        <a class="btn" href="/admin/user/{{ user.id }}/services"><button type="button" class="btn btn-default">聊天记录</button></a>
+                                        <button type="button" class="btn btn-default" data-id="{{ user.id }}" data-type="{{ user.type }}" data-count="{{ user.count }}" data-expire="{{ user.expire }}" data-toggle="modal" data-target="#modal-default">
+                                            充值
+                                        </button>
+                                    </td>
+
+                                </tr>
+                                @endeach
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- /.card-body -->
+                        <div class="card-footer clearfix">
+                            <ul class="pagination pagination-sm m-0 float-right">
+                                <!-- Previous link -->
+                                @if(users.page > 1)
+                                    <li class="page-item">
+                                        <a class="page-link" href="/admin/users?page={{ users.page - 1 }}">上一页</a>
+                                    </li>
+                                @endif
+
+                            <!-- Next link -->
+                                @if(users.page < users.lastPage)
+                                    <li class="page-item">
+                                        <a class="page-link" href="/admin/users?page={{ users.page + 1 }}">下一页</a>
+                                    </li>
+                                @endif
+                            </ul>
+                        </div>
+                    </div>
+                    <!-- /.card -->
+                </div>
+            </div>
+            <!-- /.row -->
+        </div><!-- /.container-fluid -->
+        <div class="modal fade" id="modal-default" data-id="0">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">用户充值</h4>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- form start -->
+                        <form>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label for="exampleInputEmail1">用户类型</label>
+                                    <div class="form-group">
+                                        <div class="form-check">
+                                            <label class="form-check-label"><input class="form-check-input" type="radio" name="radio1" value="0">限字符不限时</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <label class="form-check-label"><input class="form-check-input" type="radio" name="radio1" value="1">
+                                            限时不限字符</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <label class="form-check-label"><input class="form-check-input" type="radio" name="radio1" value="2">
+                                            限时限字符</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <label class="form-check-label"><input class="form-check-input" type="radio" name="radio1" value="3">
+                                            不限时不限字符</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="exampleInputPassword1">可用字符数</label>
+                                    <input type="number" class="form-control" id="chars" placeholder="可用字符">
+                                </div>
+                                <div class="form-group">
+                                    <label>到期时间</label>
+                                    <div class="input-group date" id="datetimepicker1" data-target-input="nearest">
+                                        <input type="text" class="form-control datetimepicker-input" data-target="#datetimepicker1"/>
+                                        <div class="input-group-append" data-target="#datetimepicker1" data-toggle="datetimepicker">
+                                            <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                        <button type="button" class="btn btn-primary" id="saveBtn">保存</button>
+                    </div>
+                </div>
+                <!-- /.modal-content -->
+            </div>
+            <!-- /.modal-dialog -->
+        </div>
+        <!-- /.modal -->
+    </section>
+    <!-- /.content -->
+@endsection
+@section('script')
+    <script src="/AdminLTE-3.2.0/plugins/moment/moment-with-locales.min.js"></script>
+    <script src="/AdminLTE-3.2.0/plugins/daterangepicker/daterangepicker.js"></script>
+    <script src="/AdminLTE-3.2.0/plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js"></script>
+
+    <script type="text/javascript">
+        function search() {
+            let query = $('#search').val().trim()
+            if (query) {
+                window.location.href = '/admin/users?query=' + query
+            } else {
+                window.location.href = '/admin/users'
+            }
+        }
+
+        $(function () {
+            $('#modal-default').on('show.bs.modal', function (event) {
+                var btn = $(event.relatedTarget) // a that triggered the modal;
+                console.log("show.bs.modal", btn);
+                var type = btn.data('type');
+                console.log(typeof type);
+                $('#chars').val(btn.data('count'));
+                $('input[name="radio1"][value="'+type+'"]').prop('checked', true).change();
+                $('#datetimepicker1').datetimepicker('date', btn.data('expire'));
+                $('#modal-default').data('id', btn.data('id'));
+            });
+            $('#datetimepicker1').datetimepicker({
+                locale: 'zh-cn',
+                format: 'YYYY-MM-DD HH:mm:ss',
+                icons: { time: 'far fa-clock' },
+            });
+            $('#saveBtn').click(function() {
+                // 这里执行你的保存操作
+                console.log('保存按钮被点击了');
+                $.ajax({
+                    url: '/admin/user_charge',
+                    type: 'POST',
+                    datatype: 'json',
+                    data: {
+                        id: $('#modal-default').data('id'),
+                        type: $('input[name="radio1"]:checked').val(),
+                        count: $('#chars').val(),
+                        expire: $('#datetimepicker1 input').val()
+                    },
+                    success: function(response) {
+                        // 请求成功时执行的操作
+                        console.log('保存成功', response);
+                        if (response.status != 0) {
+                            alert(response.msg)
+                        } else {
+                            $('#modal-default').modal('hide');
+                            document.location.reload();
+                        }
+                    },
+                    error: function(error) {
+                        // 请求失败时执行的操作
+                        console.log('保存失败：' + error);
+                    }
+                })
+            });
+            $('input[name="radio1"]').change(function(){
+                const _value = $('input[name="radio1"]:checked').val();
+                if (_value === '0' || _value === '2') {
+                    $('#chars').parent().show();
+                } else {
+                    $('#chars').parent().hide();
+                }
+                if (_value === '1' || _value === '2') {
+                    $('#datetimepicker1').parent().show();
+                } else {
+                    $('#datetimepicker1').parent().hide();
+                }
+            });
+        });
+    </script>
+@endsection
+@section('css')
+    <link rel="stylesheet" href="/AdminLTE-3.2.0/plugins/fontawesome-free/css/all.min.css">
+    <link rel="stylesheet" href="/AdminLTE-3.2.0/plugins/daterangepicker/daterangepicker.css">
+    <link rel="stylesheet" href="/AdminLTE-3.2.0/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css">
+
+@endsection
